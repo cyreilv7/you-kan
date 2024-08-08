@@ -41,7 +41,7 @@ app.locals.pluralize = require('pluralize');
 
 // CORS Configuration
 const corsOptions = {
-  origin: 'http://localhost:4200', // The origin of Angular app
+  origin: 'https://you-kan.vercel.app/', // The origin of Angular app
   credentials: true // Allow cookies and credentials to be included
 };
 
