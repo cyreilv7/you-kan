@@ -16,14 +16,34 @@ import { MatIcon } from '@angular/material/icon';
 import { User } from '../../models/user.model';
 import { UsersService } from '../users/users.service';
 
+import { Router } from '@angular/router';
+import { AuthService } from '../../../auth.service';
+import { CommonModule } from '@angular/common'; // needed for *ngIf
+
 @Component({
   selector: 'app-sign-up',
   standalone: true,
-  imports: [MatCardModule, MatFormFieldModule, ReactiveFormsModule, MatInputModule, MatSelectModule, 
-    MatDialogContent, MatDialogActions, MatDialogTitle, MatButtonModule, TextFieldModule, MatDatepicker, MatDatepickerModule, MatNativeDateModule, MatIcon], changeDetection: ChangeDetectionStrategy.OnPush,
+  imports: [
+    MatCardModule, 
+    MatFormFieldModule, 
+    ReactiveFormsModule, 
+    MatInputModule, 
+    MatSelectModule, 
+    MatDialogContent, 
+    MatDialogActions, 
+    MatDialogTitle, 
+    MatButtonModule, 
+    TextFieldModule, 
+    MatDatepicker, 
+    MatDatepickerModule, 
+    MatNativeDateModule, 
+    MatIcon,
+    CommonModule
+  ], 
   providers: [provideNativeDateAdapter()],
   templateUrl: './sign-up.component.html',
-  styleUrl: './sign-up.component.css'
+  styleUrl: './sign-up.component.css',
+  changeDetection: ChangeDetectionStrategy.OnPush,
 })
 export class SignUpComponent {
   // readonly dialogRef = inject(MatDialogRef<SignUpComponent>);
@@ -33,15 +53,15 @@ export class SignUpComponent {
 
   @Input() user!: User;
 
-  constructor() {}
-
   userForm = new FormGroup({
     first_name: new FormControl<string>('', [Validators.required]),
     last_name: new FormControl<string>('', [Validators.required]),
-    email: new FormControl<string>('', [Validators.required]),
-    passoword_hash: new FormControl<string>('', [Validators.required]),
-    created_at: new FormControl(new Date(), [Validators.required]),
- });
+    email: new FormControl<string>('', [Validators.required, Validators.email]),
+    password: new FormControl<string>('', [Validators.required])
+  });
+
+  constructor(private authService: AuthService, private router: Router) {}
+
 
   cancel(): void {
     // exit logic here 
@@ -56,22 +76,26 @@ export class SignUpComponent {
     });
   }
 
-  submit(): void {
-    // if (this.taskForm.valid) {
-    //   const task: Task = {
-    //     name: this.taskForm.get('name').value,
-    //     typeId: this.taskForm.get('type').value,
-    //     priorityId: this.taskForm.get('priority').value,
-    //     description: this.taskForm.get('description').value,
-    //     statusId: this.taskForm.get('status').value,
-    //     assigneeId: this.taskForm.get('assignee').value,
-    //     creatorId: this.taskForm.get('creator').value,
-    //   };
+  submit() {
+    if (this.userForm.valid) {
+      const { first_name, last_name, email, password } = this.userForm.value;
 
-    //   this.taskService.createTask(task).subscribe((task) => {
-    //     console.log('Added task:', task);
-    //   });
-    // }
+      if (first_name && last_name && email && password) {
+        this.authService.register({ first_name, last_name, email, password }).subscribe(
+          response => {
+            console.log('Registration successful', response);
+            this.router.navigate(['/task-board']);
+          },
+          error => {
+            console.error('Registration error', error);
+          }
+        );
+      } else {
+        console.error('Form fields are missing');
+      }
+    } else {
+      console.log('Form is invalid');
+    }
   }
 
 }

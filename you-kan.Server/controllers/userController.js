@@ -7,7 +7,6 @@ const hashPassword = async (password) => {
 };
 
 const getUsers = async (req, res) => {
-  console.log(req.user)
     try {
       const users = await User.findAll();
       res.json({ message: 'All user data', data: users });
@@ -34,7 +33,6 @@ const getUsers = async (req, res) => {
   const updateUser = async (req, res) => {
     try {
       const userData = req.body;
-      console.log(userData.password_hash);
     
       // Check if a new password is being set
       if (userData.password_hash) {

@@ -16,31 +16,64 @@ import { MatIcon } from '@angular/material/icon';
 import { User } from '../../models/user.model';
 import { UsersService } from '../users/users.service';
 
+import { Router } from '@angular/router';
+import { AuthService } from '../../../auth.service';
+import { CommonModule } from '@angular/common'; // needed for *ngIf
+
 @Component({
   selector: 'app-login',
   standalone: true,
-  imports: [MatCardModule, MatFormFieldModule, ReactiveFormsModule, MatInputModule, MatSelectModule, 
-    MatDialogContent, MatDialogActions, MatDialogTitle, MatButtonModule, TextFieldModule, MatDatepicker, MatDatepickerModule, MatNativeDateModule, MatIcon], changeDetection: ChangeDetectionStrategy.OnPush,
-  templateUrl: './login.component.html',
-  styleUrl: './login.component.css'
+  imports: [
+    MatCardModule, 
+    MatFormFieldModule, 
+    ReactiveFormsModule, 
+    MatInputModule, 
+    MatSelectModule, 
+    MatDialogContent, 
+    MatDialogActions, 
+    MatDialogTitle, 
+    MatButtonModule, 
+    TextFieldModule, 
+    MatDatepicker, 
+    MatDatepickerModule, 
+    MatNativeDateModule, 
+    MatIcon,
+    CommonModule
+  ], 
+    templateUrl: './login.component.html',
+    styleUrl: './login.component.css',
+    changeDetection: ChangeDetectionStrategy.OnPush,
 })
 
 export class LoginComponent {
 
-  public dialog = inject(MatDialog);
-
   loginForm = new FormGroup({
-    email: new FormControl<string>('', [Validators.required]),
+    email: new FormControl<string>('', [Validators.required, Validators.email]),
     password: new FormControl<string>('', [Validators.required])
   })
   
-  onLogin() {
-    const loginRef = this.dialog.open(LoginComponent);
+  constructor(private authService: AuthService, private router: Router) {}
 
-    loginRef.afterClosed().subscribe(result => {
-      if (result !== undefined) {
+  onLogin() {
+    if (this.loginForm.valid) {
+      const { email, password } = this.loginForm.value;
+
+      if (email && password) {
+        this.authService.login(email, password).subscribe(
+          response => {
+            console.log('Login successful', response);
+            this.router.navigate(['/task-board']);
+          },
+          error => {
+            console.error('Login error', error);
+          }
+        );
+      } else {
+        console.error('Email or password is missing');
       }
-    });
+    } else {
+      console.log('Form is invalid');
+    }
   }
 
   cancel(): void {

@@ -1,18 +1,21 @@
 <h3 mat-dialog-title>Login</h3>
-<p>Please login with your username and password below.</p>
+<p>Please login with your email and password below.</p>
 <mat-dialog-content>
-    <form [formGroup]="loginForm">
-        <mat-form-field class="basic-input">
-            <mat-label>Email</mat-label>
-            <input matInput formControlName="email" />
-        </mat-form-field>
-        <mat-form-field class="basic-input">
-            <mat-label>Password</mat-label>
-            <input matInput formControlName="password" />
-        </mat-form-field>
-    </form>
+  <form [formGroup]="loginForm">
+    <mat-form-field class="basic-input">
+      <mat-label>Email</mat-label>
+      <input matInput formControlName="email" />
+      <mat-error *ngIf="loginForm.get('email')?.hasError('required')">Email is required.</mat-error>
+      <mat-error *ngIf="loginForm.get('email')?.hasError('email')">Invalid email format.</mat-error>
+    </mat-form-field>
+    <mat-form-field class="basic-input">
+      <mat-label>Password</mat-label>
+      <input matInput type="password" formControlName="password" />
+      <mat-error *ngIf="loginForm.get('password')?.hasError('required')">Password is required.</mat-error>
+    </mat-form-field>
+  </form>
 </mat-dialog-content>
 <mat-dialog-actions>
-    <button mat-button (click)="cancel()">Cancel</button>
-    <button mat-button cdkFocusInitial (click)="onLogin()">Login</button>
-</mat-dialog-actions> 
+  <button mat-button (click)="cancel()">Cancel</button>
+  <button mat-button cdkFocusInitial (click)="onLogin()">Login</button>
+</mat-dialog-actions>
