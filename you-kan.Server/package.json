@@ -1,10 +1,10 @@
 {
   "name": "you-kan.server",
   "version": "1.0.0",
-  "main": "server.js",
+  "main": "index.js",
   "scripts": {
     "test": "jest",
-    "start": "node server.js"
+    "start": "node api/index.js"
   },
   "keywords": [],
   "author": "",
