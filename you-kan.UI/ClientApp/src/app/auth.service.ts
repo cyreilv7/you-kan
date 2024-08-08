@@ -6,7 +6,7 @@ import { Observable, switchMap } from 'rxjs';
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8000'; // Update with server URL
+  private apiUrl = 'https://you-kan-api.vercel.app/'; // Update with server URL
 
   constructor(private http: HttpClient) { }
 
