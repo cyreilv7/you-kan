@@ -13,6 +13,8 @@ require('dotenv').config({ path: envFile });
 // bit of a hack since sequelize wants an object/function but .env file cand only contains strings
 const logger = process.env.LOGGER === 'false' ? false : console.log;
 
+// const dialectModule = process.env.NODE_ENV === 'test' ? null : require('mysql2');
+
 const sequelize = new Sequelize(
   process.env.DB_NAME,
   process.env.DB_USERNAME,
@@ -23,6 +25,7 @@ const sequelize = new Sequelize(
     dialect: process.env.DIALECT,
     port: process.env.DB_PORT,
     logging: logger,
+    dialectModule: require('mysql2'),
   }
 );
 

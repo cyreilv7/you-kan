@@ -5,7 +5,7 @@
 const express = require('express');
 const bodyParser = require('body-parser');
 const cors = require('cors');
-const sequelize = require('./db/db-connector');
+const sequelize = require('../db/db-connector');
 
 
 require('dotenv').config();
@@ -41,10 +41,11 @@ app.locals.pluralize = require('pluralize');
 
 // CORS Configuration
 const corsOptions = {
-  origin: 'http://localhost:4200', // The origin of Angular app
-  credentials: true // Allow cookies and credentials to be included
+  origin: 'https://you-kan.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  credentials: true
 };
-
 // middleware
 app.use(logger('dev'));
 app.use(cors(corsOptions));
@@ -78,13 +79,13 @@ app.use(function(req, res, next) {
   next();
 });
 
-const taskRoutes = require('./routes/taskRoutes');
-const projectRoutes = require('./routes/projectRoutes')
-const userRoutes = require('./routes/userRoutes')
-const sprintRoutes = require('./routes/sprintRoutes')
-const subtaskRoutes = require('./routes/subtaskRoutes')
-const commentRoutes = require('./routes/commentRoutes')
-const authRoutes = require('./routes/authRoutes')
+const taskRoutes = require('../routes/taskRoutes');
+const projectRoutes = require('../routes/projectRoutes')
+const userRoutes = require('../routes/userRoutes')
+const sprintRoutes = require('../routes/sprintRoutes')
+const subtaskRoutes = require('../routes/subtaskRoutes')
+const commentRoutes = require('../routes/commentRoutes')
+const authRoutes = require('../routes/authRoutes')
 
 // routes
 app.use('/api/tasks', taskRoutes);

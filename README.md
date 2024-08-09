@@ -1,2 +1,2 @@
-# you-kan
+## you-kan
 Opinionated project management board 
