@@ -1,26 +1,24 @@
-import { Component, inject, Input, OnInit } from '@angular/core';
+import { Component, EventEmitter, inject, OnInit, Output } from '@angular/core';
 import { FormBuilder, FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogClose, MatDialogContent, MatDialogRef, MatDialogTitle } from '@angular/material/dialog';
-import { User } from '../../../user-management/models/user.model';
-import { MatCardModule } from '@angular/material/card';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatInputModule } from '@angular/material/input';
-import { MatSelectModule } from '@angular/material/select';
-import { MatButtonModule } from '@angular/material/button';
-import { MatListModule } from '@angular/material/list';
-import { MatIconModule } from '@angular/material/icon';
+import { MAT_DIALOG_DATA, MatDialogActions, MatDialogContent, MatDialogRef, MatDialogTitle } from '@angular/material/dialog';
+import { MaterialModule } from '../../../shared/material.module';
 import { TextFieldModule } from '@angular/cdk/text-field';
 import { Task } from '../../models/task.model';
 import { TaskService } from '../../services/task.service';
 import { Sprint } from '../../../sprints/models/sprint.model';
+import { SprintService } from '../../../sprints/services/sprint.service';
 import { Comment } from '../../models/comment.model';
+import { CommentService } from '../../services/comment.service';
+import { User } from '../../../user-management/models/user.model';
+import { UserService } from '../../../user-management/services/user.service';
+import { NgIf } from '@angular/common';
 
 
 @Component({
   selector: 'app-task-detail',
   standalone: true,
-  imports: [MatCardModule, MatIconModule, MatFormFieldModule, ReactiveFormsModule, MatInputModule, MatSelectModule, 
-    MatDialogContent, MatDialogActions, MatDialogTitle, MatButtonModule, TextFieldModule, MatListModule],
+  imports: [ ReactiveFormsModule, MaterialModule, NgIf,
+    MatDialogContent, MatDialogActions, MatDialogTitle, TextFieldModule],
   templateUrl: './task-detail.component.html',
   styleUrl: './task-detail.component.css'
 })
@@ -28,9 +26,25 @@ export class TaskDetailComponent implements OnInit {
   private fb = inject(FormBuilder);
   readonly dialogRef = inject(MatDialogRef<TaskDetailComponent>);
   readonly taskService = inject(TaskService);
-  public data: { projectId: number, task?: Task } = inject(MAT_DIALOG_DATA);
+  readonly sprintService = inject(SprintService);
+  readonly commentService = inject(CommentService);
+  readonly userService = inject(UserService);
+  
+  public data: { projectId: number, task?: Task, usersForProject: User[] } = inject(MAT_DIALOG_DATA);
+
+  //ideally these would be in a reference table and we would use Ids insted of magic strings
+  taskTypes: string[] = ['Feature','Bug'];
+  taskEfforts: number[] = [1,2,3,4,5]
+  priorities: string[] = ['Low','Medium','High','Critical'];
+  taskStatuses: string[] = ['Backlog','Committed','Developing','Testing','Complete'];
+  sprintsForProject!: Sprint[];
+  usersForProject!: User[];
+
+  @Output() taskDeleted = new EventEmitter();
+
   taskForm: FormGroup;
   newCommentForm: FormGroup;
+  commentsForNewTask: Comment[] = [];
   taskUnderEdit!: Task;
 
   constructor() {
@@ -50,8 +64,8 @@ export class TaskDetailComponent implements OnInit {
     });
   }
 
+
   ngOnInit() {
-    debugger;
     if (this.data.task) {
       this.taskUnderEdit = this.data.task;
 
@@ -62,17 +76,31 @@ export class TaskDetailComponent implements OnInit {
         priority: this.data.task?.priority,
         status: this.data.task?.status,
         effort: this.data.task?.effort,
-        sprint_id: this.data.task?.sprint_id?? null,
-        assignee_id: this.data.task?.assignee_id?? null,
+        sprint_id: this.data.task?.sprint_id ?? null,
+        assignee_id: this.data.task?.assignee_id ?? null,
       });
 
       this.newCommentForm.setValue({
         newComment: ''
       });
 
-      if (this.taskUnderEdit.task_id === 1) {
-        this.taskUnderEdit.comments = this.commentsTask1;
-      }
+      //get comments for task
+      this.commentService.getCommentsForTask(this.taskUnderEdit.task_id).subscribe(
+        (comments) => {
+          this.taskUnderEdit.comments = comments ?? [];
+          if (this.taskUnderEdit.comments.length > 0) {
+            this.taskUnderEdit.comments.forEach(com => {
+              com.user = this.findById(this.usersForProject, com.user_id)
+            })
+          }
+        })
+
+      //get sprint options for proj  
+      this.sprintService.getSprints(this.data.projectId).subscribe((sprints) => {
+        this.sprintsForProject = sprints;
+      })
+
+      this.usersForProject = this.data.usersForProject;
     }
   }
 
@@ -84,53 +112,48 @@ export class TaskDetailComponent implements OnInit {
     if (this.taskForm.valid) {
       this.dialogRef.close(this.taskForm.value); 
     }
-    //   this.taskService.createTask(task).subscribe((task) => {
-    //     console.log('Added task:', task);
-    //   });
-    // }
   }
 
-  //Comments will be handled separately from Tasks as the Task endpoints don't accommodate complex objects
+  deleteTask(): void {
+    this.dialogRef.close(this.taskUnderEdit.task_id);
+  }
+
+  // getCommentCreatorName(comment: Comment): string {
+  //   console.log(comment)
+  //   return `${comment.user.first_name} ${comment.user.last_name[0]}`;
+  // }
+
+  //Comments will be handled separatel. y from Tasks as the Task endpoints don't accommodate complex objects
   addComment() {
     debugger;
     if (this.newCommentForm.get('newComment')?.value !== '') {
-    //first need http request to add comment and return the new comments id, then push to array
-    this.taskUnderEdit?.comments?.push(
-      {comment_id: this.taskUnderEdit?.comments?.length + 1,
-         task_id: this.taskUnderEdit.task_id, 
-         comment_text: this.newCommentForm.get('newComment')?.value, 
-         user_id: 1} as Comment);
-
-      this.newCommentForm.reset();
+      let newComment = {comment_id: null, task_id: this.taskUnderEdit.task_id, comment_text: this.newCommentForm.get('newComment')?.value,  user_id: 6,};
+      this.commentService.createComment(newComment).subscribe((com) => {
+        this.taskUnderEdit?.comments?.push(com as Comment);
+        this.newCommentForm.reset();
+      })
     }
   }
 
-  deleteComment(currentComment : Comment) {
-    //will need to make http request here too to delete
+  deleteComment(comment : Comment) {
     debugger;
-    let newCommentList = this.taskUnderEdit.comments?.filter((c) => c.comment_id !== currentComment.comment_id );
-    this.taskUnderEdit.comments = newCommentList;
+    this.commentService.deleteComment(comment.comment_id).subscribe(() => {
+      let newCommentList = this.taskUnderEdit.comments?.filter((c) => c.comment_id !== comment.comment_id );
+      this.taskUnderEdit.comments = newCommentList;
+    })
   }
 
-  sprintsProject1: Sprint[] = [
-    { sprint_id: 1, sprint_name: 'Gather requirements', project_id: 1, start_date: new Date(2024, 6, 1), end_date: new Date(2024, 6, 12) },
-    { sprint_id: 2, sprint_name: 'Project diagrams', project_id: 1, start_date: new Date(2024, 6, 15), end_date: new Date(2024, 6, 26) },
-  ];
+  editComment(currentComment : Comment) {
+    //will need to make http request here too to delete
+    // this.commentService.
+    // let newCommentList = this.taskUnderEdit.comments?.filter((c) => c.comment_id !== currentComment.comment_id );
+    // this.taskUnderEdit.comments = newCommentList;
+  }
 
-  commentsTask1: Comment[] = [{comment_id: 1, task_id: 1, comment_text: 'test comment 1', user_id: 1, },
-    {comment_id: 2, task_id: 1, comment_text: 'test comment 2', user_id: 2, }]
- 
-  taskTypes: string[] = ['Feature','Bug'];
-
-  priorities: string[] = ['Low','Medium','High','Critical'];
-
-  taskStatuses: string[] = ['Backlog','Uncommitted','Developing','Testing','Complete'];
-
-  availableUsers: User[] = [
-    { user_id: 1, first_name: 'John', last_name: 'Smith', email: 'jsmith@test.com' },
-    { user_id: 2, first_name: 'Jane', last_name: 'Doe', email: 'jdoe@test.com' },
-    { user_id: 3, first_name: 'Hannibal', last_name: 'Lecter', email: 'hlecter@test.com'}
-  ];
-
-
+  findById(users: User[], id: number | undefined): any {
+    if (id == undefined) {
+      return {};
+    }
+    return users.find(user => user.user_id === id);
+  }
 }

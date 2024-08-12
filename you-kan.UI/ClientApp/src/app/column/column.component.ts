@@ -2,10 +2,7 @@ import { Component, EventEmitter, Input, Output } from '@angular/core';
 import { TaskCardComponent } from '../tasks/components/task-card/task-card.component';
 import { UpperCasePipe } from '@angular/common';
 import { Task } from '../tasks/models/task.model';
-import {
-  CdkDragDrop,
-  CdkDropList,
-} from '@angular/cdk/drag-drop';
+import { CdkDragDrop, CdkDropList } from '@angular/cdk/drag-drop';
 
 @Component({
   selector: 'app-column',

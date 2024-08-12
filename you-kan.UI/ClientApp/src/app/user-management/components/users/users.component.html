@@ -1,4 +1,5 @@
-<h3>Users</h3>
+<h3>Current System Users</h3>
+<div>
 <table mat-table [dataSource]="dataSource" class="mat-elevation-z8 user-table">
     <!-- First Name Column -->
     <ng-container matColumnDef="first_name">
@@ -17,17 +18,19 @@
       <th mat-header-cell *matHeaderCellDef>Email</th>
       <td mat-cell *matCellDef="let user">{{user.email}}</td>
     </ng-container>
-  
-   <!-- Actions Column -->
+
+       <!-- Actions Column -->
    <ng-container matColumnDef="actions">
     <th mat-header-cell *matHeaderCellDef>Actions</th>
-    <td mat-cell *matCellDef="let element">
-      <button mat-icon-button color="primary" (click)="editUser(element)">
+    <td mat-cell *matCellDef="let user">
+      <div *ngIf="currentUserId === user.user_id">
+      <button mat-icon-button color="primary" (click)="editUser(user)">
         <mat-icon>edit</mat-icon>
       </button>
-      <button mat-icon-button color="warn" (click)="deleteUser(element)">
+      <button mat-icon-button color="warn" (click)="deleteUser(user)">
         <mat-icon>delete</mat-icon>
       </button>
+    </div>
     </td>
   </ng-container>
 
@@ -37,8 +40,9 @@
       *matRowDef="let row; columns: displayColumns;"
   ></tr>
 </table>
+</div>
 
-<app-users-detail *ngIf="selectedUser" [@detailExpand] [user]="selectedUser" (save)="saveUpdate($event)"
+<app-user-detail *ngIf="selectedUser" [@detailExpand] [user]="selectedUser" (save)="saveUpdate($event)"
   (cancel)="cancelEdit()">
-</app-users-detail>
+</app-user-detail>
   

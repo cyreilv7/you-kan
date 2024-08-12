@@ -15,7 +15,7 @@ module.exports = (sequelize, DataTypes) => {
       },
       sprint_id: {
         type: DataTypes.INTEGER,
-        allowNull: false,
+        allowNull: true,
       },
       priority: {
         type: DataTypes.STRING,

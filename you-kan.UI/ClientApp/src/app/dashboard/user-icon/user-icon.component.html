@@ -1,0 +1,16 @@
+<h3 mat-dialog-title>Hello, {{userProfile?.first_name}}</h3>
+    <mat-dialog-content>
+        <div class="header">Here is Your Account Information:</div>
+        <div class="name">
+            {{ userProfile?.first_name }} {{ userProfile?.last_name }}
+        </div>
+        <div class="email">
+            {{ userProfile?.email }}
+        </div>
+
+    </mat-dialog-content>
+    <mat-dialog-actions>
+        <div class="actions-bar">
+            <button mat-button type="button" (click)="onCancel()">Exit</button>
+        </div>
+    </mat-dialog-actions>

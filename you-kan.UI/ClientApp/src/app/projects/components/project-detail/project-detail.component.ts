@@ -1,44 +1,37 @@
 import { CommonModule } from '@angular/common';
-import { Component, EventEmitter, inject, Input, Output } from '@angular/core';
+import { Component, EventEmitter, inject, Input, Output, signal } from '@angular/core';
 import { FormsModule, ReactiveFormsModule, FormGroup, FormBuilder, Validators } from '@angular/forms';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatButtonModule } from '@angular/material/button';
-import { MatInputModule } from '@angular/material/input';
-import { MatCardModule } from '@angular/material/card';
-import { MatSelectModule } from '@angular/material/select';
-import { MatListModule } from '@angular/material/list';
-import { MatChipsModule } from '@angular/material/chips';
-import { MatIconModule } from '@angular/material/icon';
+import { MaterialModule} from '../../../shared/material.module'
 import { User } from '../../../user-management/models/user.model';
 import { Sprint } from '../../../sprints/models/sprint.model';
 import { SprintDetailComponent } from '../../../sprints/components/sprint-detail.component';
 import { MatDialog } from '@angular/material/dialog';
+import { UserService } from '../../../user-management/services/user.service';
+import { SprintService } from '../../../sprints/services/sprint.service';
+import { concatMap, of } from 'rxjs';
+import { ProjectService } from '../../services/project.service';
 
 
 @Component({
   selector: 'app-project-detail',
   standalone: true,
-  imports: [CommonModule, FormsModule, ReactiveFormsModule, MatFormFieldModule, MatChipsModule,
-    MatButtonModule, MatInputModule, MatCardModule, MatSelectModule, MatIconModule, MatListModule],
+  imports: [CommonModule, FormsModule, ReactiveFormsModule, MaterialModule],
   templateUrl: './project-detail.component.html',
   styleUrl: './project-detail.component.css'
 })
 export class ProjectDetailComponent {
   private dialog = inject(MatDialog);
-
+  private userService = inject(UserService);
+  private sprintService = inject(SprintService);
+  private projectService = inject(ProjectService);
   @Input() project: any;
   @Output() save = new EventEmitter<any>();
   @Output() cancel = new EventEmitter<void>();
 
   projectForm: FormGroup;
-  selectedUsers: User[] = [];
-
-  availableUsers: User[] = [
-    { user_id: 1, first_name: 'John', last_name: 'Smith', email: 'jsmith@test.com', password_hash: 'testing123', created_at: 'Date here' },
-    { user_id: 2, first_name: 'Jane', last_name: 'Doe', email: 'jdoe@test.com', password_hash: 'testing456', created_at: 'Date here' },
-    { user_id: 3, first_name: 'Hannibal', last_name: 'Lecter', email: 'hlecter@test.com', password_hash: 'wgraham123', created_at: 'Date here' }
-  ];
-
+  availableUsers: User[] = [];
+  projectUsers = signal<User[]>([]);
+  projectSprints = signal<Sprint[]>([]);
 
   constructor(private fb: FormBuilder) {
     this.projectForm = this.fb.group({
@@ -47,29 +40,44 @@ export class ProjectDetailComponent {
   }
 
   ngOnInit() {
+    this.userService.getUsers().subscribe((users) => {
+      this.availableUsers = users;
+      // this.availableUsers = users.data;
+    })
+
     if (this.project) {
       this.projectForm.patchValue(this.project);
-      this.selectedUsers = this.project.users || [];
+      this.projectUsers.set(this.project.users ?? []);
+      this.projectSprints.set(this.project.sprints ?? []);
     }
   }
 
+  //Add user as collaborator on project
   addUser(user: User) {
-    if (!this.selectedUsers.find(u => u.user_id === user.user_id)) {
-      this.selectedUsers.push(user);
-      this.availableUsers = this.availableUsers.filter(u => u.user_id !== user.user_id);
-    }
+    this.projectService.addProjectUser(this.project.project_id, user.user_id).subscribe(() => {
+      if (this.projectUsers().length == 0) {
+        this.projectUsers.set([user]);
+        this.availableUsers = this.availableUsers.filter(u => u.user_id !== user.user_id);
+      }
+      else if (!this.projectUsers().find(u => u.user_id === user.user_id)) {
+        this.projectUsers.set([...this.projectUsers(), user]);
+        this.availableUsers = this.availableUsers.filter(u => u.user_id !== user.user_id);
+      }
+    })
   }
 
+  //Remove user as collaborator on project
   removeUser(user: User) {
-    this.selectedUsers = this.selectedUsers.filter(u => u.user_id !== user.user_id);
-    this.availableUsers.push(user);
+    this.projectService.removeProjectUser(this.project.project_id, user.user_id).subscribe(() => {
+      this.projectUsers.set(this.projectUsers().filter(u => u.user_id !== user.user_id));
+      this.availableUsers.push(user);
+    })
   }
 
   onSubmit() {
     if (this.projectForm.valid) {
       const updatedProject = {
-        ...this.projectForm.value,
-        users: this.selectedUsers
+        ...this.projectForm.value, project_id: this.project.project_id
       };
       this.save.emit(updatedProject);
     }
@@ -81,13 +89,27 @@ export class ProjectDetailComponent {
       data: { projectId: this.project.project_id }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
-      if (result) {
-        this.project.sprints.push({
-          ...result
-        });
-      }
-    });
+    dialogRef.afterClosed()
+      .pipe(
+        concatMap(result => {
+          if (result) {
+            return this.sprintService.createSprint(result, this.project.project_id);
+          } else {
+            return of(null);
+          }
+        })
+      ).subscribe(result => {
+        if (result) {
+          if (this.projectSprints().length == 0) {
+            this.projectSprints.set([result])
+          }
+          else {
+          this.projectSprints.update(sprints => {
+           return [...sprints, result]
+          });
+        }
+        }
+      });
   }
 
   editSprint(editSprint: Sprint) {
@@ -96,14 +118,32 @@ export class ProjectDetailComponent {
       data: { projectId: this.project.project_id, sprint: editSprint }
     });
 
-    dialogRef.afterClosed().subscribe(result => {
+    dialogRef.afterClosed()
+    .pipe(
+      concatMap(result => {
+        if (result) {
+          return this.sprintService.updateSprint(result);
+        } else {
+          return of(null);
+        }
+      })
+    ).subscribe(result => {
       if (result) {
-        const index = this.project.sprints.findIndex((s: { id: number | undefined; }) => s.id === editSprint.sprint_id);
+        let newArray = this.projectSprints();
+        const index = newArray.findIndex((s: Sprint) => s.sprint_id === editSprint.sprint_id);
         if (index !== -1) {
-          this.project.sprints[index] = { ...editSprint, ...result };
+          newArray[index] = { ...editSprint, ...result };
+          this.projectSprints.set(newArray);
         }
       }
     });
+  }
+
+  deleteSprint(sprint: Sprint) {
+    this.sprintService.deleteSprint(sprint.sprint_id).subscribe(() => {
+      let newArray = this.projectSprints().filter(s => s.sprint_id !== sprint.sprint_id);
+      this.projectSprints.set(newArray);
+    })
   }
 
   onCancel() {

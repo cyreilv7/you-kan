@@ -3,13 +3,14 @@
     <mat-form-field>
       <mat-label>Choose project</mat-label>
       <mat-select formControlName="project" (selectionChange)="onProjectChange($event)">
+        <mat-option value="null">---</mat-option>
         @for (project of projects; track project) {
         <mat-option [value]="project.project_id">{{project.project_name}}</mat-option>
         }
       </mat-select>
     </mat-form-field>
   </form>
-  <button mat-fab extended (click)="openTaskDetail()">
+  <button mat-fab extended [disabled]="selectedProjectId == null" (click)="addNewTask()">
     <mat-icon>add</mat-icon>
     Task
   </button>
@@ -19,8 +20,8 @@
         <mat-label>Filter by sprint</mat-label>
         <mat-select formControlName="sprint">
           <mat-option [value]=null>---</mat-option>
-          @for (sprint of sprints; track sprint.id) {
-          <mat-option [value]="sprint.id">{{sprint.name}}</mat-option>
+          @for (sprint of sprintsForProject(); track sprint.sprint_id) {
+          <mat-option [value]="sprint.sprint_id">{{sprint.sprint_name}}</mat-option>
           }
         </mat-select>
       </mat-form-field>
@@ -37,8 +38,8 @@
         <mat-label>Filter by assignee</mat-label>
         <mat-select formControlName="assignee">
           <mat-option [value]=null>---</mat-option>
-          @for (assignee of assignees; track assignee.id) {
-          <mat-option [value]="assignee.id">{{assignee.name}}</mat-option>
+          @for (user of usersForProject(); track user.user_id) {
+          <mat-option [value]="user.user_id">{{user.first_name}} {{user.last_name}}</mat-option>
           }
         </mat-select>
       </mat-form-field>

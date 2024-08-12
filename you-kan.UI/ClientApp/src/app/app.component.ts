@@ -11,5 +11,5 @@ import { ProjectListComponent } from './projects/components/project-list/project
   styleUrl: './app.component.css'
 })
 export class AppComponent {
-  title = 'YouKan';
+  title = 'You-Kan';
 }

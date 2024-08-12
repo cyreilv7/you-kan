@@ -20,8 +20,8 @@
                 </mat-form-field>
             </form>
             <mat-chip-listbox>
-                <mat-label>Users:</mat-label>
-                <mat-chip *ngFor="let user of selectedUsers" (removed)="removeUser(user)">
+                <mat-label>Collaborators:</mat-label>
+                <mat-chip *ngFor="let user of projectUsers()" (removed)="removeUser(user)">
                     <mat-icon matChipAvatar>person</mat-icon>
                     {{user.first_name}}
                     <button matChipRemove>
@@ -39,13 +39,16 @@
                 </button>
             </div>
             <mat-list>
-                @for (sprint of project.sprints; track sprint.sprint_id) {
+                @for (sprint of projectSprints(); track sprint.sprint_id) {
                 <mat-list-item>
                     <span matListItemTitle>
                         {{sprint.sprint_name}} : {{ sprint.start_date | date }} - {{ sprint.end_date | date }}
                     </span>
                     <button mat-icon-button matListItemMeta (click)="editSprint(sprint)">
                         <mat-icon>edit</mat-icon>
+                    </button>
+                    <button mat-icon-button matListItemMeta (click)="deleteSprint(sprint)">
+                        <mat-icon>delete</mat-icon>
                     </button>
                 </mat-list-item>
                 }

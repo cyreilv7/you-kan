@@ -18,6 +18,7 @@ API docs github repo: https://github.com/cyreilv7/you-kan-api-docs
 
 4. Set the environment variable `NODE_ENV` equal to "test"
   - On windows do `set NODE_ENV=test`
+      - If you are using a powershell terminal on Windows (ex. VSCode), the command is `$env:NODE_ENV='test'`
   - MacOS/Linux: `export NODE_ENV=test`
 
 5. Run `npm start` to start the server. You know it's working with the sqlite database if something like this is printed to the terminal:

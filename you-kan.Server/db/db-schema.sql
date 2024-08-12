@@ -75,7 +75,7 @@ CREATE TABLE IF NOT EXISTS `Tasks` (
   `task_id` INT NOT NULL AUTO_INCREMENT,
   `task_title` VARCHAR(255) NOT NULL,
   `task_description` VARCHAR(255) NULL DEFAULT NULL,
-  `sprint_id` INT NULL,
+  `sprint_id` INT NULL DEFAULT NULL,
   `priority` VARCHAR(255) NOT NULL,
   `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `status` VARCHAR(255) NOT NULL,
@@ -87,20 +87,19 @@ CREATE TABLE IF NOT EXISTS `Tasks` (
   INDEX `creator_user_id` (`creator_user_id` ASC) VISIBLE,
   INDEX `Tasks_ibfk_3_idx` (`project_id` ASC) VISIBLE,
   INDEX `Tasks_ibfk_2_idx` (`sprint_id` ASC) VISIBLE,
-  UNIQUE INDEX `sprint_id_UNIQUE` (`sprint_id` ASC) VISIBLE,
   CONSTRAINT `Tasks_ibfk_1`
     FOREIGN KEY (`creator_user_id`)
-    REFERENCES `Users` (`user_id`)
+    REFERENCES `you-kan`.`Users` (`user_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION,
   CONSTRAINT `Tasks_ibfk_2`
     FOREIGN KEY (`sprint_id`)
-    REFERENCES `Sprints` (`sprint_id`)
-    ON DELETE NO ACTION
-    ON UPDATE NO ACTION,
+    REFERENCES `you-kan`.`Sprints` (`sprint_id`)
+    ON DELETE SET NULL
+    ON UPDATE CASCADE,
   CONSTRAINT `Tasks_ibfk_3`
     FOREIGN KEY (`project_id`)
-    REFERENCES `Projects` (`project_id`)
+    REFERENCES `you-kan`.`Projects` (`project_id`)
     ON DELETE NO ACTION
     ON UPDATE NO ACTION)
 ENGINE = InnoDB
@@ -130,14 +129,14 @@ USE `you-kan` ;
 -- Table `Comments`
 -- -----------------------------------------------------
 CREATE TABLE IF NOT EXISTS `Comments` (
-  `comment_id` INT NOT NULL,
+  `comment_id` INT NOT NULL AUTO_INCREMENT,
   `task_id` INT NOT NULL,
   `comment_text` VARCHAR(255) NOT NULL,
   `created_at` TIMESTAMP NULL DEFAULT CURRENT_TIMESTAMP,
   `user_id` INT NOT NULL,
   PRIMARY KEY (`comment_id`),
-  INDEX `task_id_idx` (`task_id` ASC) VISIBLE,
-  INDEX `Comments_ibfk_2` (`user_id` ASC) VISIBLE,
+  INDEX `task_id_idx` (`task_id` ASC),
+  INDEX `user_id_idx` (`user_id` ASC),
   CONSTRAINT `Comments_ibfk_1`
     FOREIGN KEY (`task_id`)
     REFERENCES `Tasks` (`task_id`)
@@ -147,8 +146,8 @@ CREATE TABLE IF NOT EXISTS `Comments` (
     FOREIGN KEY (`user_id`)
     REFERENCES `Users` (`user_id`)
     ON DELETE NO ACTION
-    ON UPDATE NO ACTION)
-ENGINE = InnoDB
+    ON UPDATE NO ACTION
+) ENGINE = InnoDB
 DEFAULT CHARACTER SET = utf8mb4
 COLLATE = utf8mb4_0900_ai_ci;
 

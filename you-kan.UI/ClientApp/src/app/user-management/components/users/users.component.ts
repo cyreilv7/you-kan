@@ -1,21 +1,18 @@
 import { CommonModule, NgFor, NgIf, UpperCasePipe } from '@angular/common';
 import { Component, OnInit, inject } from '@angular/core';
-import { MatTableModule } from '@angular/material/table';
+import { MaterialModule } from '../../../shared/material.module';
 import { User } from '../../models/user.model';
-import { MatIconModule } from '@angular/material/icon';
-import { MatButtonModule } from '@angular/material/button';
-import { MatDialogModule } from '@angular/material/dialog';
-import { UsersDetailComponent } from './users-detail.component';
-import { FormBuilder, FormsModule } from '@angular/forms';
+import { UserService } from '../../services/user.service';
+import { UserDetailComponent } from '../user-detail/user-detail.component';
+import { FormBuilder } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
-import { UsersService } from './users.service';
-import { MatDialog } from '@angular/material/dialog';
+import { AuthService } from '../../services/auth.service';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-users-component',
   standalone: true,
-  imports: [CommonModule, MatTableModule, MatIconModule, MatButtonModule, MatDialogModule, NgFor, NgIf, UpperCasePipe, UsersDetailComponent, 
-  ],
+  imports: [CommonModule, MaterialModule, NgFor, NgIf, UpperCasePipe, UserDetailComponent ],
   templateUrl: './users.component.html',
   styleUrl: './users.component.css',
   animations:[
@@ -32,23 +29,20 @@ import { MatDialog } from '@angular/material/dialog';
 })
 export class UsersComponent implements OnInit {
   private fb = inject(FormBuilder);
-  userService = inject(UsersService);
-  private dialog = inject(MatDialog);
+  userService = inject(UserService);
 
   dataSource: User[] = [];
   displayColumns: string[] = ['first_name', 'last_name', 'email', 'actions'];
   selectedUser: any = null;
+  currentUserId: number = -1;
 
-  // replace with endpoint
-  // only display name &  email from sqlquery - test data has full info
-  userTestData: User[] = [
-    {user_id: 1, first_name: 'John', last_name: 'Smith', email: 'jsmith@test.com', password_hash: 'testing123', created_at: 'Date here'}, 
-    { user_id: 2, first_name: 'Jane', last_name: 'Doe', email: 'jdoe@test.com', password_hash: 'testing456', created_at: 'Date here'},
-    { user_id: 3, first_name: 'Hannibal', last_name: 'Lecter', email: 'hlecter@test.com', password_hash: 'wgraham123', created_at: 'Date here'}
-  ];
+  constructor(private authService: AuthService, private router: Router) {}
 
   ngOnInit(): void {
-      this.dataSource = this.userTestData;
+    this.authService.currentUserId.subscribe(newValue => {this.currentUserId = newValue});
+    this.userService.getUsers().subscribe((users) => {
+      this.dataSource = users;
+    })
   }
 
   editUser(user: any) {
@@ -56,32 +50,44 @@ export class UsersComponent implements OnInit {
     // Implement edit logic
   }
 
-  saveUpdate(updatedUser: any) {
-    debugger;
-    const idx = this.dataSource.findIndex(u => u.user_id === updatedUser.user_id);
-    if (idx !== -1) {
-      this.dataSource[idx] = updatedUser;
-      this.dataSource = [...this.dataSource];
+  saveUpdate(updatedUser: User) {
+    this.userService.updateUser(updatedUser).subscribe(() =>  {
+      const idx = this.dataSource.findIndex(u => u.user_id === this.currentUserId);
+      if (idx !== -1) {
+        this.dataSource[idx] = updatedUser;
+        this.dataSource = [...this.dataSource];
+        this.authService.userProfile.next(updatedUser);
     }
     this.selectedUser = null;
-  }
+  })
+}
 
   cancelEdit() {
     this.selectedUser = null;
   }
 
   deleteUser(user: any) {
-    this.dataSource = this.dataSource.filter(u => u.user_id !== user.user_id);
-    this.dataSource = [...this.dataSource];
-    // Implement delete logic
-  }
+    if (confirm( "Are you sure you want to delete this user? You will not be able to login with them if you do.")) {
+    this.userService.deleteUser(user.user_id).subscribe(() => {
+      this.dataSource = this.dataSource.filter(u => u.user_id !== user.user_id);
+      this.dataSource = [...this.dataSource];
+      this.authService.logout();
+      this.authService.isLoggedIn.next(false);
+      this.router.navigate(['/']);
+    })
 
-  openUser(): void {
-    const sprintRef = this.dialog.open(UsersDetailComponent);
+  }}
 
-    sprintRef.afterClosed().subscribe(result => {
-      if (result !== undefined) {
+  logout() {
+    this.authService.logout().subscribe(
+      response => {
+        console.log('Logout successful', response);
+        this.authService.isLoggedIn.next(false);
+        this.router.navigate(['/']);
+      },
+      error => {
+        console.error('Logout error', error);
       }
-    });
+    );
   }
-}
+  }

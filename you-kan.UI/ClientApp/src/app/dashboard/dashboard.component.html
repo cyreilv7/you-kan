@@ -1,6 +1,6 @@
-<mat-toolbar class="toolbar" color="primary">
+<mat-toolbar *ngIf="isLoggedIn" class="toolbar" color="primary">
     <mat-toolbar-row>
-        <h4><img src="assets/images/youkanlogo.png" height="170px" width="110px"></h4>
+        <h4><img src="assets/images/youkan-transparent.png" height="175px" width="115px"></h4>
         <div class="toolbar-actions">
             <button mat-mini-fab (click)="openUserDetail()">
                 <mat-icon>account_circle</mat-icon>
@@ -13,13 +13,11 @@
 </mat-toolbar>
     <mat-sidenav-container>
         <!-- Left sidenav -->
-        <mat-sidenav mode="side" opened class="side-nav-detail">
+        <mat-sidenav *ngIf="isLoggedIn" mode="side" opened class="side-nav-detail">
             <mat-nav-list>
                 <li><a routerLink="/task-board" mat-button>Task Board</a></li>
                 <li><a routerLink="/projects" mat-button>Projects</a></li>
                 <li><a routerLink="/users" mat-button>Users</a></li>
-                <li><a routerLink="/login" mat-button>Login</a></li>
-                <li><a routerLink="/sign-up" mat-button>Sign Up</a></li>
             </mat-nav-list>
         </mat-sidenav>
 

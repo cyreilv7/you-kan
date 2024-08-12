@@ -1,0 +1,25 @@
+.header {
+  font:bold;
+  text-align: center;
+  padding: 10px;
+}
+
+.mat-dialog-content {
+  position: relative;
+  box-shadow: black;
+  box-sizing: border-box;
+  border-radius: 8px;
+}
+
+h3 {
+  text-align: center;
+}
+
+.name {
+  text-align: center;
+}
+
+.email {
+  text-align: center;
+  padding-bottom: 10px;
+}

@@ -141,7 +141,7 @@ const updateProject = async (req, res) => {
     }
   
       const [updated] = await Project.update(req.body, {
-        where: { project_id: req.params.id }
+        where: { project_id: projectId}
       });
       if (updated) {
         res.json({ message: 'Project updated' });
@@ -221,8 +221,9 @@ const getCollaborator = async (req, res) => {
 
 // Function to add a collaborator to a project
 const addCollaborator = async (req, res) => {
+  console.log('TEST')
   const project_id = req.params.id;
-  const { email } = req.body; // Retrieve the email from the request body
+  const { user_id } = req.query; 
 
   try {
     // Check if the project exists
@@ -231,16 +232,13 @@ const addCollaborator = async (req, res) => {
       return res.status(404).json({ message: 'Project not found' });
     }
 
-    // Find the user by email
-    const user = await User.findOne({ where: { email } });
+    // Find the user by id
+    const user = await User.findOne({ where: { user_id } });
 
     // Check if the user exists
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    // Extract the user_id from the found user
-    const user_id = user.user_id;
 
     // Check if the user is already a collaborator
     const existingCollaborator = await ProjectUser.findOne({
@@ -267,7 +265,7 @@ const addCollaborator = async (req, res) => {
 // Function to remove a collaborator from a project
 const removeCollaborator = async (req, res) => {
   const project_id = req.params.id;
-  const { email } = req.body; // Retrieve the email from the request body
+  const { user_id } = req.query; // Retrieve the email from the request body
   const requesterUserId = req.user.user_id; // Get the requester’s user ID from the authenticated user
 
   try {
@@ -283,15 +281,12 @@ const removeCollaborator = async (req, res) => {
     }
 
     // Find the user by email
-    const user = await User.findOne({ where: { email } });
+    const user = await User.findOne({ where: { user_id } });
 
     // Check if the user exists
     if (!user) {
       return res.status(404).json({ message: 'User not found' });
     }
-
-    // Extract the user_id from the found user
-    const user_id = user.user_id;
 
     // Check if the user is a collaborator
     const existingCollaborator = await ProjectUser.findOne({

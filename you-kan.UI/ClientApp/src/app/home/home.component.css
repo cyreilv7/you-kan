@@ -1,0 +1,13 @@
+.basic-input {
+  padding:5px;
+}
+
+.logo {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.logo-header {
+  margin: -30px;
+}

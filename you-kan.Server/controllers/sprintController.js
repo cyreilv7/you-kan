@@ -1,49 +1,47 @@
-const { Sprint, Project, User } = require('../models');
+const { Sprint, Project, User, ProjectUser } = require('../models');
 
-const getSprint = async (req, res) => {
+const getSprints = async (req, res) => {
     try {
-        const targetProjectId = req.params.projectId; 
-        const requesterProjectId = req.query.project_id; // Assuming project ID is passed in query, example: "http://localhost:8000/api/sprints/project/3?project_id=3"
+      const targetProjectId = req.params.projectId; 
+      const requesterUserId = req.user.user_id;;
 
-        // Validate that the requesterProjectId is provided
-        if (!requesterProjectId) {
+      // Validate that the requesterUserId is provided
+      if (!requesterUserId) {
+        return res.status(400).json({ error: 'User ID is required' });
+      }
+  
+      //Check if the requester is a collaborator on the target project
+      const projectUser = await ProjectUser.findOne({
+        where: {
+          user_id: requesterUserId,
+          project_id: targetProjectId,
+        },
+      });
+  
+      if (!projectUser) {
+        return res.status(403).json({ error: 'User does not have permission to view these sprints' });
+      }
+  
+      // Fetch sprints where project_id matches targetProjectId
+      const sprints = await Sprint.findAll({
+        where: { project_id: targetProjectId },
+      });
+  
+      res.json(sprints);
+    } catch (err) {
+      res.status(500).json(err);
+    }
+  };
+
+  const getSprintById = async (req, res) => {
+    try {
+        const sprintId = req.params.id;
+        const requesterUserId = req.user.user_id;
+
+        // Validate that the requesterUserId is provided
+        if (!requesterUserId) {
             return res.status(400).json({ error: 'User ID is required' });
         }
-
-        // Check if the requester is allowed to view sprints of the target project
-        const sprint = await Sprint.findOne({
-            where: { project_id: targetProjectId }
-        });
-
-        if (!sprint) {
-            return res.status(404).json({ error: 'No sprint found' });
-        }
-
-        if (sprint.project_id !== parseInt(requesterProjectId, 10)) {
-            return res.status(403).json({ error: 'User does not have permission to view these sprints' });
-        }
-
-        // Fetch sprints where project_id matches targetProjectId
-        const sprints = await Sprint.findAll({
-            where: { project_id: targetProjectId }
-        });
-
-        res.json(sprints);
-    } catch (err) {
-        console.error(err);
-        res.status(500).json({ error: 'Server error' });
-    }
-};
-
-const getSprintById = async (req, res) => {
-    try {
-        // const requesterUserId = req.query.user_id; // Assuming user ID is passed in query parameters, example:"http://localhost:8000/api/sprints/1?user_id=10"
-        const sprintId = req.params.id;
-
-        // // Validate that the requesterUserId is provided
-        // if (!requesterUserId) {
-        //     return res.status(400).json({ error: 'User ID is required' });
-        // }
 
         // Fetch the sprint to check if it exists and to get the project_id
         const sprint = await Sprint.findByPk(sprintId);
@@ -52,13 +50,17 @@ const getSprintById = async (req, res) => {
             return res.status(404).json({ error: 'Sprint not found' });
         }
 
-        // // Fetch the associated project to get the creator_user_id
-        // const project = await Project.findByPk(sprint.project_id);
+        // Check if the requester is a collaborator on the project associated with the sprint
+        const projectUser = await ProjectUser.findOne({
+            where: {
+                user_id: requesterUserId,
+                project_id: sprint.project_id,
+            },
+        });
 
-        // // Check if the requester has permission to view the sprint
-        // if (project.creator_user_id !== parseInt(requesterUserId, 10)) {
-        //     return res.status(403).json({ error: 'User does not have permission to view this sprint' });
-        // }
+        if (!projectUser) {
+            return res.status(403).json({ error: 'User does not have permission to view this sprint' });
+        }
 
         // If the user has permission, return the sprint details
         res.json(sprint);
@@ -70,39 +72,51 @@ const getSprintById = async (req, res) => {
 };
 
 const createSprint = async (req, res) => {
-    const { sprint_name, project_id, start_date, end_date } = req.body;
+    const { sprint_name, start_date, end_date } = req.body;
+    const { projectId } = req.params;
+    const requesterUserId = req.user.user_id; // Assuming you have the user_id from the logged-in user
 
     try {
-        // Fetch the project to check if it exists
-        const project = await Project.findByPk(project_id);
+        // Check if the project exists
+        const project = await Project.findByPk(projectId);
 
         if (!project) {
             return res.status(404).json({ error: 'Project not found' });
         }
 
+        // Check if the user is a collaborator
+        const isCollaborator = await ProjectUser.findOne({
+            where: {
+                project_id: projectId,
+                user_id: requesterUserId
+            }
+        });
+
+        if (!isCollaborator) {
+            return res.status(403).json({ error: 'You do not have permission to create a sprint for this project' });
+        }
+
         // Create the sprint
         const sprint = await Sprint.create({
             sprint_name,
-            project_id,
+            project_id: projectId,
             start_date,
             end_date
         });
 
-        res.status(201).send('Sprint created successfully');
+        res.status(201).json(sprint);
     } catch (err) {
         console.error(err);
         res.status(500).send('Server error');
     }
 };
 
+
 const updateSprint = async (req, res) => {
     try {
-
-        /*
-            TODO: fetch associated project to get all users that is on the project
-        */
-        const requesterUserId = req.query.user_id; // Assuming user ID is passed in query parameters, example: http://localhost:8000/api/sprints/2?user_id=10
+        const requesterUserId = req.user.user_id;
         const sprintId = req.params.id;
+        const { sprint_name, start_date, end_date } = req.body;
 
         // Validate that the requesterUserId is provided
         if (!requesterUserId) {
@@ -111,41 +125,55 @@ const updateSprint = async (req, res) => {
 
         // Fetch the sprint to check if it exists and to get the project_id
         const sprint = await Sprint.findByPk(sprintId);
-
         if (!sprint) {
             return res.status(404).json({ error: 'Sprint not found' });
         }
 
-        // Fetch the associated project to get the creator_user_id
+        // Fetch the associated project to check permissions
         const project = await Project.findByPk(sprint.project_id);
+        if (!project) {
+            return res.status(404).json({ error: 'Project not found' });
+        }
 
-        // Check if the requester has permission to update the sprint
-        if (project.creator_user_id !== parseInt(requesterUserId, 10)) {
+        // Check if the requester is a collaborator
+        const isCollaborator = await ProjectUser.findOne({
+            where: {
+                user_id: requesterUserId,
+                project_id: sprint.project_id
+            }
+        });
+
+        if (!isCollaborator) {
             return res.status(403).json({ error: 'User does not have permission to update this sprint' });
         }
 
-        const [updated] = await Sprint.update(req.body, {
+        const updateSprint = await Sprint.findOne({
             where: { sprint_id: sprintId }
         });
-        if (updated) {
-            res.json({ message: 'Sprint updated' });
+
+        if (updateSprint) {
+            await updateSprint.update({
+                sprint_name,
+                start_date,
+                end_date
+            });
+
+        if (updateSprint) {
+            res.json(updateSprint);
         } else {
             res.status(404).json({ message: 'Sprint not found' });
-        }
+        }}
+        
     } catch (err) {
         console.error(err);
         res.status(500).json({ error: 'Server error' });
     }
-};
+}
+
 
 const deleteSprint = async (req, res) => {
-
-    /*
-        TODO: fetch associated project to get all users that is on the project
-        - change any task FK associated to this sprint changed?
-    */
     try {
-        const requesterUserId = req.query.user_id; // Assuming user ID is passed in query parameters, example" http://localhost:8000/sprints/2?user_id=10
+        const requesterUserId = req.user.user_id; // User ID from authentication
         const sprintId = req.params.id;
 
         // Validate that the requesterUserId is provided
@@ -155,16 +183,25 @@ const deleteSprint = async (req, res) => {
 
         // Fetch the sprint to check if it exists and to get the project_id
         const sprint = await Sprint.findByPk(sprintId);
-
         if (!sprint) {
             return res.status(404).json({ error: 'Sprint not found' });
         }
 
-        // Fetch the associated project to get the creator_user_id
+        // Fetch the associated project to check permissions
         const project = await Project.findByPk(sprint.project_id);
+        if (!project) {
+            return res.status(404).json({ error: 'Project not found' });
+        }
 
-        // Check if the requester has permission to delete the sprint
-        if (project.creator_user_id !== parseInt(requesterUserId, 10)) {
+        // Check if the requester is a collaborator on the project
+        const isCollaborator = await ProjectUser.findOne({
+            where: {
+                user_id: requesterUserId,
+                project_id: sprint.project_id
+            }
+        });
+
+        if (!isCollaborator) {
             return res.status(403).json({ error: 'User does not have permission to delete this sprint' });
         }
 
@@ -172,6 +209,7 @@ const deleteSprint = async (req, res) => {
         const deleted = await Sprint.destroy({
             where: { sprint_id: sprintId }
         });
+
         if (deleted) {
             res.json({ message: 'Sprint deleted' });
         } else {
@@ -183,5 +221,4 @@ const deleteSprint = async (req, res) => {
     }
 };
 
-
-module.exports = { getSprint, getSprintById, createSprint, updateSprint, deleteSprint };
+module.exports = { getSprints , getSprintById, createSprint, updateSprint, deleteSprint };

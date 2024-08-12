@@ -3,7 +3,7 @@ const { getTasks, getTaskById, createTask, deleteTask, updateTask } = require('.
 const ensureLogIn = require('connect-ensure-login').ensureLoggedIn;
 
 const router = express.Router();
-const ensureLoggedIn = ensureLogIn();
+ const ensureLoggedIn = ensureLogIn();
 
 router.get('/', ensureLoggedIn, getTasks);
 router.get('/:id', ensureLoggedIn, getTaskById);

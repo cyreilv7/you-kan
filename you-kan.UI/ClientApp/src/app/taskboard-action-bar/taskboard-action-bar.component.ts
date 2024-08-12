@@ -1,33 +1,39 @@
-import { Component, EventEmitter, inject, OnInit, Output } from '@angular/core';
+import { Component, EventEmitter, inject, OnInit, Output, signal } from '@angular/core';
 import { FormControl, FormGroup, ReactiveFormsModule, Validators } from '@angular/forms';
-import { MatButtonModule } from '@angular/material/button';
-import { MatIconModule } from '@angular/material/icon';
-import { MatFormFieldModule } from '@angular/material/form-field';
-import { MatSelectModule } from '@angular/material/select';
-import { MAT_DIALOG_DATA, MatDialog, MatDialogActions, MatDialogClose, MatDialogContent, MatDialogRef, MatDialogTitle } from '@angular/material/dialog';
+import {MaterialModule } from '../shared/material.module';
+import { MatDialog } from '@angular/material/dialog';
 import { TaskDetailComponent } from '../tasks/components/task-detail/task-detail.component';
 import { Task } from '../tasks/models/task.model';
 import { Project } from '../projects/models/project.model';
+import { ProjectService } from '../projects/services/project.service';
+import { User } from '../user-management/models/user.model';
+import { UserService } from '../user-management/services/user.service';
+import { Sprint } from '../sprints/models/sprint.model';
+import { SprintService } from '../sprints/services/sprint.service';
 
 @Component({
   selector: 'app-taskboard-action-bar',
   standalone: true,
-  imports: [MatButtonModule, MatIconModule, MatFormFieldModule, MatSelectModule, ReactiveFormsModule],
+  imports: [MaterialModule, ReactiveFormsModule],
   templateUrl: './taskboard-action-bar.component.html',
   styleUrl: './taskboard-action-bar.component.css'
 })
 export class TaskboardActionBarComponent implements OnInit {
+  private projectService = inject(ProjectService);
+  private sprintService = inject(SprintService);
+  private userService = inject(UserService);
+  public dialog = inject(MatDialog);
   @Output() projectChanged = new EventEmitter<number>();
   @Output() taskboardFiltersChanged = new EventEmitter<any>();
   @Output() taskCreated = new EventEmitter<Task>();
-  currentProject!: Project;
+  @Output() projectUsers = new EventEmitter<User[]>;
 
-  public dialog = inject(MatDialog);
+  projects!: Project[];
+  selectedProjectId: number | null = null;
+  sprintsForProject = signal<Sprint[]>([]);
+  usersForProject = signal<User[]>([]);
 
-  projects: Project[] = [{ project_id: 1, project_name: 'Project XYZ'},{ project_id: 2, project_name: 'Project XYZ'}];
   priorities = ['Low', 'Medium', 'High', 'Critical'];
-  assignees = [{ id: 1, name: 'Developer 1' }, { id: 2, name: 'Developer 2' }, { id: 3, name: 'Developer 3' }];
-  sprints = [{ id: 1, name: '7/1/24 - 7/12/24' }, { id: 2, name: '7/15/24 - 7/26/24' }, { id: 3, name: '7/29/24 - 8/9/24' }];
 
   projectInput = new FormGroup({
     project: new FormControl<number | null>(null, [Validators.required]),
@@ -42,34 +48,75 @@ export class TaskboardActionBarComponent implements OnInit {
 
   ngOnInit(): void {
     //TODO: Get project, sprint, assignee options and assign them to dropdowns
-    this.projectInput.get('project')?.setValue(1);
-    this.currentProject = this.projects[0];
-
+    this.loadProjects();
+  
     this.taskboardFilters.valueChanges.subscribe(values =>
       this.taskboardFiltersChanged.emit(values)
     )
   }
 
-  onProjectChange(event: any) {
-    this.projectChanged.emit(event.value);
-    this.taskboardFilters.reset();
+  loadProjects() {
+    this.projectService.getProjectsForUser().subscribe(
+      (data: Project[]) => {
+        this.projects = data;
+      }
+    );
   }
 
-  openTaskDetail(): void {
-    const dialogRef = this.dialog.open(TaskDetailComponent,
-       { width: '60vw', maxWidth: '60vw', height: '600px', maxHeight: '600px' });
+  //update task filters for project
+  onProjectChange(event: any) {
+    if (event.value == null) {
+      this.selectedProjectId = null;
+      this.taskboardFilters.reset();
+      this.projectChanged.emit(event.value);
+    }
+    else {
+      this.selectedProjectId = event.value;
+      this.projectChanged.emit(event.value);
+      this.taskboardFilters.reset();
+      this.updateFiltersForProject(event.value);
+    }
+  }
+
+  //opens dialog to create a new task
+  addNewTask(): void {
+    const dialogRef = this.dialog.open(TaskDetailComponent, {
+      width: '50vw',
+      maxWidth: '50vw',
+      height: '650px',
+      maxHeight: '650px',
+      data: { project_id: this.selectedProjectId }
+    });
 
     dialogRef.afterClosed().subscribe(result => {
+      debugger;
       if (result) {
         const newTask: Task = {
-          task_id: null, task_title: result.name, task_type: result.type, priority: result.priority,
-          task_description: result.description, status: result.status, assignee_id: result.assignee_id ?? null,
-          effort: result.effort, sprint_id: result.sprintId ?? null,
-          project_id: this.currentProject.project_id
+          task_id: null, task_title: result.task_title, task_type: result.task_type, priority: result.priority,
+          task_description: result.task_description, status: result.status,
+          effort: result.effort, sprint_id: result.sprint_id ?? null, project_id: this.selectedProjectId
         }
         this.taskCreated.emit(newTask);
       }
     });
+  }
+
+  //gets the filter values for a project 
+  updateFiltersForProject(id: number) {
+    this.sprintService.getSprints(id).subscribe((sprints) => {
+      if(sprints.length == 0) {
+        this.sprintsForProject.set([]);
+      }
+      else {
+      this.sprintsForProject.set(sprints);
+      }
+    })
+
+    //TODO change to just get users in proj
+    this.userService.getUsers().subscribe((userData) => {
+      this.usersForProject.set(userData.data);
+      this.projectUsers.emit(userData.data);
+    })
   }
 
 }

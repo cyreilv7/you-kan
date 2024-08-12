@@ -5,5 +5,5 @@ export interface Comment {
     task_id: number;
     comment_text: string;
     user_id?: number;
-    user?: User;
+    user?: any;
 }
