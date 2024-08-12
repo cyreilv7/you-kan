@@ -41,8 +41,10 @@ app.locals.pluralize = require('pluralize');
 
 // CORS Configuration
 const corsOptions = {
-  origin: 'https://you-kan.vercel.app/', // The origin of Angular app
-  credentials: true // Allow cookies and credentials to be included
+  origin: 'https://you-kan.vercel.app',
+  methods: ['GET', 'POST', 'PUT', 'DELETE', 'OPTIONS'],
+  allowedHeaders: ['Content-Type', 'Authorization', 'X-CSRF-Token'],
+  credentials: true
 };
 
 // middleware
