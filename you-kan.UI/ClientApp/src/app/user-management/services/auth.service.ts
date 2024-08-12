@@ -6,7 +6,7 @@ import { catchError, Observable, of, ReplaySubject, switchMap, tap } from 'rxjs'
   providedIn: 'root'
 })
 export class AuthService {
-  private apiUrl = 'http://localhost:8000'; // Update with server URL
+  private apiUrl = 'https://you-kan-api.vercel.app'; // Update with server URL
 
   private csrfToken: string | null = null;
   private sessionId: string | null = null;

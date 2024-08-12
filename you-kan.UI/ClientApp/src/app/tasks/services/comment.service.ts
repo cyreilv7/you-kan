@@ -8,7 +8,7 @@ export class CommentService {
 
   protected http = inject(HttpClient);
   private authService = inject(AuthService);
-  private apiRoot = 'http://localhost:8000/api/comments';
+  private apiRoot = 'https://you-kan-api.vercel.app/api/comments';
 
   constructor() {}
 

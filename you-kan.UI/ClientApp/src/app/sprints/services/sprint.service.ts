@@ -10,7 +10,7 @@ export class SprintService {
 
   protected http = inject(HttpClient);
   private authService = inject(AuthService);
-  private apiRoot = 'http://localhost:8000/api/sprints';
+  private apiRoot = 'https://you-kan-api.vercel.app/api/sprints';
 
   constructor() {}
 

@@ -9,7 +9,7 @@ export class UserService {
 
   protected http = inject(HttpClient);
   private authService = inject(AuthService);
-  private apiRoot = 'http://localhost:8000/api/users';
+  private apiRoot = 'https://you-kan-api.vercel.app/api/users';
 
   constructor() {}
 

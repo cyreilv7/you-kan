@@ -9,7 +9,7 @@ export class TaskService {
 
   protected http = inject(HttpClient);
   private authService = inject(AuthService);
-  private apiRoot = 'http://localhost:8000/api/tasks';
+  private apiRoot = 'https://you-kan-api.vercel.app/api/tasks';
 
   constructor() {}
 

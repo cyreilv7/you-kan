@@ -1,9 +1,9 @@
 const express = require('express');
-const { getProject, getProjectById, createProject, deleteProject, updateProject, getCollaborator, addCollaborator, removeCollaborator } = require('../controllers/projectController')
+const { getProject, getProjectById, createProject, deleteProject, updateProject, getCollaborator, addCollaborator, removeCollaborator } = require('../controllers/projectController');
 const ensureLogIn = require('connect-ensure-login').ensureLoggedIn;
 
 const router = express.Router();
-const ensureLoggedIn = ensureLogIn();
+ const ensureLoggedIn = ensureLogIn();
 
 router.get('/', ensureLoggedIn, getProject);
 router.get('/:id', ensureLoggedIn, getProjectById);
