@@ -16,7 +16,7 @@ const getProject = async (req, res) => {
       });
   
       if (!project) {
-        return res.status(404).json({ error: 'No projects found for the user' });
+        return res.status(200).json([]);
       }
   
       if (project.creator_user_id !== parseInt(requesterUserId, 10)) {
@@ -95,7 +95,7 @@ const createProject = async (req, res) => {
       project_id: project.project_id
     });
 
-    res.status(201).send('Project created and associated with user successfully');
+    res.status(201).json(project);
   } catch (err) {
     console.error(err);
     res.status(500).send('Server error');
@@ -203,16 +203,22 @@ const getCollaborator = async (req, res) => {
   try {
     const collaborators = await ProjectUser.findAll({
       where: { project_id },
-      attributes: ['user_id']
+      include: [
+        {
+          model: User,
+          attributes: ['user_id', "first_name", "last_name"]
+        }
+      ],
+      
     });
 
     if (!collaborators.length) {
       return res.status(404).json({ message: 'Project not found or no collaborators' });
     }
 
-    const userIds = collaborators.map(collaborator => collaborator.user_id);
+    const users = collaborators.map(collaborator => collaborator.User);
 
-    res.status(200).json({ userIds }); // returns array of user_id
+    res.status(200).json(users); // returns array of User object
   } catch (error) {
     console.error('Error fetching collaborators:', error);
     res.status(500).json({ message: 'Server error' });
@@ -221,7 +227,6 @@ const getCollaborator = async (req, res) => {
 
 // Function to add a collaborator to a project
 const addCollaborator = async (req, res) => {
-  console.log('TEST')
   const project_id = req.params.id;
   const { user_id } = req.query; 
 

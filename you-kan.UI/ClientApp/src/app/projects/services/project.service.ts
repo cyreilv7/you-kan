@@ -3,6 +3,7 @@ import { HttpClient, HttpParams, HttpHeaders } from '@angular/common/http';
 import { Observable, switchMap } from 'rxjs';
 import { Project } from '../models/project.model';
 import { AuthService } from '../../user-management/services/auth.service';
+import { User } from '../../user-management/models/user.model';
 
 @Injectable({ providedIn: 'root' })
 export class ProjectService {
@@ -61,10 +62,16 @@ export class ProjectService {
       );
     }
 
-    removeProjectUser(projectId: number, userId: number): Observable<void> {
-        const params = new HttpParams().set('user_id', userId);
-        return this.addCsrfToken().pipe(
-          switchMap(headers => this.http.delete<void>(`${this.apiRoot}/collaborators/${projectId}`, { headers, params, withCredentials: true }))
-        );
-      }
+  removeProjectUser(projectId: number, userId: number): Observable<void> {
+      const params = new HttpParams().set('user_id', userId);
+      return this.addCsrfToken().pipe(
+        switchMap(headers => this.http.delete<void>(`${this.apiRoot}/collaborators/${projectId}`, { headers, params, withCredentials: true }))
+      );
+    }
+
+  getProjectCollaborators(projectId: number): Observable<User[]> {
+    return this.addCsrfToken().pipe(
+      switchMap(headers => this.http.get<User[]>(`${this.apiRoot}/collaborators/${projectId}`, { headers, withCredentials: true }))
+    );
+  }
 }

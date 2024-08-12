@@ -11,7 +11,6 @@ export class AuthService {
   private csrfToken: string | null = null;
   private sessionId: string | null = null;
 
-
   // observable for toggling dashboard nav/toolbar
   isLoggedIn: ReplaySubject<boolean> = new ReplaySubject<boolean>(1);
   currentUserId: ReplaySubject<number> = new ReplaySubject<number>(1);

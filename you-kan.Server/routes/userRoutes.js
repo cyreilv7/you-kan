@@ -6,7 +6,7 @@ const router = express.Router();
 const ensureLoggedIn = ensureLogIn();
 
 router.get('/', ensureLoggedIn,  getUsers); // most likely dont need route, nice to have for checking loggedin
-router.get('/:id', ensureLoggedIn, getUserById);// most likely dont need route, nice to have for checking loggedin
+router.get('/:id', ensureLoggedIn, getUserById);
 router.put('/:id', ensureLoggedIn, updateUser);
 router.delete('/:id', ensureLoggedIn, deleteUser);
 

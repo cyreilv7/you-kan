@@ -3,7 +3,7 @@ const ProjectUser = sequelize.define('ProjectUser', {
     user_id: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'Users',
+          model: 'User',
           key: 'user_id'
         },
         primaryKey: true
@@ -11,7 +11,7 @@ const ProjectUser = sequelize.define('ProjectUser', {
       project_id: {
         type: DataTypes.INTEGER,
         references: {
-          model: 'Projects',
+          model: 'Project',
           key: 'project_id'
         },
         primaryKey: true

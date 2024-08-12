@@ -1,4 +1,4 @@
-const { Task, Sprint, Task_Assignee, User, ProjectUser } = require('../models');
+const { Task, Sprint, User, ProjectUser } = require('../models');
 const { Sequelize } = require('sequelize');
 
 const getTasks = async (req, res) => {

@@ -17,8 +17,9 @@ const getUsers = async (req, res) => {
   };
   
  const getUserById = async (req, res) => {
+  const userId = req.params.id
     try {
-      const user = await User.findByPk(req.user.user_id);
+      const user = await User.findByPk(userId);
       if (user) {
         res.json(user);
       } else {

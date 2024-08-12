@@ -21,12 +21,12 @@ import { SprintService } from '../sprints/services/sprint.service';
 export class TaskboardActionBarComponent implements OnInit {
   private projectService = inject(ProjectService);
   private sprintService = inject(SprintService);
-  private userService = inject(UserService);
   public dialog = inject(MatDialog);
   @Output() projectChanged = new EventEmitter<number>();
   @Output() taskboardFiltersChanged = new EventEmitter<any>();
   @Output() taskCreated = new EventEmitter<Task>();
   @Output() projectUsers = new EventEmitter<User[]>;
+  @Output() projectSprints = new EventEmitter<Sprint[]>;
 
   projects!: Project[];
   selectedProjectId: number | null = null;
@@ -47,7 +47,6 @@ export class TaskboardActionBarComponent implements OnInit {
 
 
   ngOnInit(): void {
-    //TODO: Get project, sprint, assignee options and assign them to dropdowns
     this.loadProjects();
   
     this.taskboardFilters.valueChanges.subscribe(values =>
@@ -68,6 +67,8 @@ export class TaskboardActionBarComponent implements OnInit {
     if (event.value == null) {
       this.selectedProjectId = null;
       this.taskboardFilters.reset();
+      this.sprintsForProject.set([]);
+      this.usersForProject.set([]);
       this.projectChanged.emit(event.value);
     }
     else {
@@ -83,18 +84,17 @@ export class TaskboardActionBarComponent implements OnInit {
     const dialogRef = this.dialog.open(TaskDetailComponent, {
       width: '50vw',
       maxWidth: '50vw',
-      height: '650px',
-      maxHeight: '650px',
-      data: { project_id: this.selectedProjectId }
+      height: '450px',
+      maxHeight: '450px',
+      data: { project_id: this.selectedProjectId, usersForProject: this.usersForProject(), sprintsForProject: this.sprintsForProject() }
     });
 
     dialogRef.afterClosed().subscribe(result => {
-      debugger;
       if (result) {
         const newTask: Task = {
           task_id: null, task_title: result.task_title, task_type: result.task_type, priority: result.priority,
           task_description: result.task_description, status: result.status,
-          effort: result.effort, sprint_id: result.sprint_id ?? null, project_id: this.selectedProjectId
+          effort: result.effort, assignee_user_id: result.assignee_user_id, sprint_id: result.sprint_id ?? null, project_id: this.selectedProjectId
         }
         this.taskCreated.emit(newTask);
       }
@@ -102,21 +102,33 @@ export class TaskboardActionBarComponent implements OnInit {
   }
 
   //gets the filter values for a project 
-  updateFiltersForProject(id: number) {
-    this.sprintService.getSprints(id).subscribe((sprints) => {
-      if(sprints.length == 0) {
-        this.sprintsForProject.set([]);
-      }
-      else {
-      this.sprintsForProject.set(sprints);
-      }
-    })
+  updateFiltersForProject(id: number | null) {
+    if (!id) {
+      this.sprintsForProject.set([]);
+      this.usersForProject.set([]);
+    }
+    else {
+      this.sprintService.getSprints(id).subscribe((sprints) => {
+        if (sprints.length == 0) {
+          this.sprintsForProject.set([]);
+          this.projectSprints.emit(sprints)
+        }
+        else {
+          this.sprintsForProject.set(sprints);
+          this.projectSprints.emit(sprints)
+        }
+      })
 
-    //TODO change to just get users in proj
-    this.userService.getUsers().subscribe((userData) => {
-      this.usersForProject.set(userData.data);
-      this.projectUsers.emit(userData.data);
-    })
+      this.projectService.getProjectCollaborators(id).subscribe((users) => {
+        this.usersForProject.set(users);
+        this.projectUsers.emit(users);
+      })
+    }
+  }
+
+  formatDateString(date: string) {
+    let shortDate = date.substring(5, 10);
+    return shortDate.replace('-', '/');
   }
 
 }

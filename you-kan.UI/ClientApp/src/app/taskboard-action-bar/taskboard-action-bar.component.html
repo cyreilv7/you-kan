@@ -3,7 +3,7 @@
     <mat-form-field>
       <mat-label>Choose project</mat-label>
       <mat-select formControlName="project" (selectionChange)="onProjectChange($event)">
-        <mat-option value="null">---</mat-option>
+        <mat-option [value]=null>---</mat-option>
         @for (project of projects; track project) {
         <mat-option [value]="project.project_id">{{project.project_name}}</mat-option>
         }
@@ -21,7 +21,7 @@
         <mat-select formControlName="sprint">
           <mat-option [value]=null>---</mat-option>
           @for (sprint of sprintsForProject(); track sprint.sprint_id) {
-          <mat-option [value]="sprint.sprint_id">{{sprint.sprint_name}}</mat-option>
+          <mat-option [value]="sprint.sprint_id">{{sprint.sprint_name}}: {{formatDateString(sprint.start_date.toString())}}-{{formatDateString(sprint.end_date.toString())}}</mat-option>
           }
         </mat-select>
       </mat-form-field>

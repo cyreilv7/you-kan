@@ -38,6 +38,10 @@ module.exports = (sequelize, DataTypes) => {
         type: DataTypes.INTEGER,
         allowNull: false,
       },
+      assignee_user_id: {
+        type: DataTypes.INTEGER,
+        allowNull: true
+      },
       project_id: {
         type: DataTypes.INTEGER,
         allowNull: false,

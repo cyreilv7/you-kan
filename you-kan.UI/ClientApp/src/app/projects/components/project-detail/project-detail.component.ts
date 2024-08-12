@@ -8,7 +8,7 @@ import { SprintDetailComponent } from '../../../sprints/components/sprint-detail
 import { MatDialog } from '@angular/material/dialog';
 import { UserService } from '../../../user-management/services/user.service';
 import { SprintService } from '../../../sprints/services/sprint.service';
-import { concatMap, of } from 'rxjs';
+import { concatMap, of, tap } from 'rxjs';
 import { ProjectService } from '../../services/project.service';
 
 
@@ -40,15 +40,26 @@ export class ProjectDetailComponent {
   }
 
   ngOnInit() {
-    this.userService.getUsers().subscribe((users) => {
-      this.availableUsers = users;
-      // this.availableUsers = users.data;
-    })
-
+    // Combine the user fetching with the project data processing
+    this.userService.getUsers().pipe(
+      tap(users =>  {
+        this.availableUsers = users
+      }),
+      tap(() => this.initializeProjectData())
+    ).subscribe();
+  }
+  
+  private initializeProjectData() {
     if (this.project) {
+      if (this.project.users && this.project.users.length > 0) {
+        const setOfCurrentUsers = new Set(this.project.users.map((u: User) => u.user_id));
+        let filteredAvailableUsers = this.availableUsers.filter((u: User) => !setOfCurrentUsers.has(u.user_id));
+        this.availableUsers = filteredAvailableUsers;
+      }
+  
       this.projectForm.patchValue(this.project);
-      this.projectUsers.set(this.project.users ?? []);
       this.projectSprints.set(this.project.sprints ?? []);
+      this.projectUsers.set(this.project.users ?? []);
     }
   }
 
@@ -76,10 +87,13 @@ export class ProjectDetailComponent {
 
   onSubmit() {
     if (this.projectForm.valid) {
-      const updatedProject = {
-        ...this.projectForm.value, project_id: this.project.project_id
-      };
-      this.save.emit(updatedProject);
+      if (this.projectForm.get('project_name')?.value === this.project.project_name) {
+        this.cancel.emit()
+      }
+      else {
+        const updatedProject = { ...this.projectForm.value, project_id: this.project.project_id};
+        this.save.emit(updatedProject);
+      }
     }
   }
 
@@ -132,7 +146,8 @@ export class ProjectDetailComponent {
         let newArray = this.projectSprints();
         const index = newArray.findIndex((s: Sprint) => s.sprint_id === editSprint.sprint_id);
         if (index !== -1) {
-          newArray[index] = { ...editSprint, ...result };
+          let updateSprint = { ...editSprint, ...result };
+          newArray[index] = updateSprint;
           this.projectSprints.set(newArray);
         }
       }

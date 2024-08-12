@@ -22,9 +22,10 @@
             <mat-form-field class="basic-input">
                 <mat-label>Sprint</mat-label>
                 <mat-select formControlName="sprint_id">
-                    <mat-option [value]="null">---</mat-option>
+                    <mat-option [value]=null>---</mat-option>
                     @for (sprint of sprintsForProject; track sprint.sprint_id ) {
-                    <mat-option [value]="sprint.sprint_id">{{sprint.sprint_name}}</mat-option>
+                    <mat-option [value]="sprint.sprint_id">{{sprint.sprint_name}}:
+                        {{formatDateString(sprint.start_date.toString())}}-{{formatDateString(sprint.end_date.toString())}}</mat-option>
                     }
                 </mat-select>
             </mat-form-field>
@@ -46,8 +47,8 @@
             </mat-form-field>
             <mat-form-field class="basic-input">
                 <mat-label>Assignee</mat-label>
-                <mat-select formControlName="assignee_id">
-                    <mat-option [value]="null">---</mat-option>
+                <mat-select formControlName="assignee_user_id">
+                    <mat-option [value]=null>---</mat-option>
                     @for (assignee of usersForProject; track assignee.user_id ) {
                     <mat-option [value]="assignee.user_id">{{assignee.first_name}} {{assignee.last_name}}</mat-option>
                     }
@@ -56,14 +57,14 @@
             <mat-form-field class="basic-input">
                 <mat-label>Effort</mat-label>
                 <mat-select formControlName="effort">
-                    <mat-option [value]="null">---</mat-option>
+                    <mat-option [value]=null>---</mat-option>
                     @for (effort of taskEfforts; track effort) {
-                        <mat-option [value]="effort">{{effort}}</mat-option>
+                    <mat-option [value]="effort">{{effort}}</mat-option>
                     }
                 </mat-select>
             </mat-form-field>
         </form>
-        
+
         <div *ngIf="this.data.task">
             <p style="font-size: large; padding-top: 30px">Comments:</p>
             <form [formGroup]="newCommentForm">
@@ -77,15 +78,21 @@
             <mat-list>
                 @for (comment of taskUnderEdit.comments; track comment.comment_id) {
                 <mat-list-item>
-                     {{ comment.comment_text }}
-                    <button mat-icon-button matListItemMeta (click)="deleteComment(comment)">
+                    <span style="color:mediumpurple">{{(comment?.user?.first_name ?? '') + ' ' + comment?.user?.last_name?.substring(0,1) + ': '}}</span>{{
+                    comment.comment_text }}
+                    <button *ngIf="currentUserId == comment.user_id" mat-icon-button matListItemMeta
+                        (click)="editComment(comment)">
+                        <mat-icon>edit</mat-icon>
+                    </button>
+                    <button *ngIf="currentUserId == comment.user_id" mat-icon-button matListItemMeta
+                        (click)="deleteComment(comment)">
                         <mat-icon>delete</mat-icon>
                     </button>
                 </mat-list-item>
                 }
             </mat-list>
         </div>
-        </mat-dialog-content>
+    </mat-dialog-content>
     <mat-dialog-actions>
         <button mat-button (click)="cancel()">Cancel</button>
         <button mat-button cdkFocusInitial (click)="submit()">{{data.task ? 'Update' : 'Create'}}</button>

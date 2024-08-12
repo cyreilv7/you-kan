@@ -50,7 +50,6 @@ export class SprintDetailComponent implements OnInit {
       if (date) {
         const endDate = this.calculateEndDate(date);
         this.sprintForm.get('end_date')?.setValue(endDate);
-        console.log(endDate)
       }
     });
   }

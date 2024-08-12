@@ -35,13 +35,16 @@ export class CommentService {
         switchMap(headers => this.http.get<Comment>(`${this.apiRoot}/${id}`, { headers, withCredentials: true })))
     }
 
-    // create a new task
     createComment(comment: any): Observable<any> {
       return this.addCsrfToken().pipe(
         switchMap(headers => this.http.post<any>(this.apiRoot, comment, { headers, withCredentials: true })))
     }
+
+    updateComment(comment: any): Observable<any> {
+      return this.addCsrfToken().pipe(
+        switchMap(headers => this.http.put<any>(this.apiRoot, comment, { headers, withCredentials: true })))
+    }
   
-    // remove a task
     deleteComment(id: number | any): Observable<void> {
       return this.addCsrfToken().pipe(
         switchMap(headers => this.http.delete<void>(`${this.apiRoot}/${id}`, { headers, withCredentials: true })))

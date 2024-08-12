@@ -11,6 +11,6 @@ export interface Task {
     effort: number | null;
     sprint_id?: number | null;
     project_id: number | null;
-    assignee_id?: number | null;
+    assignee_user_id: number | null;
     comments? : Comment[];
 }

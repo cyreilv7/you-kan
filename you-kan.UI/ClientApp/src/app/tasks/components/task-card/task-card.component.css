@@ -3,6 +3,16 @@
     flex: 1;
 }
 
-.bug-style {
-    outline-color: red;
-}
+.avatar {
+    color: antiquewhite;
+    padding: 2px;
+    display: flex;
+    justify-content: center;
+    align-items: center;
+    border-radius:100%;
+    width:30px;
+    height: 30px;
+    font-weight: 400;
+    align-self: flex-end;
+  }
+

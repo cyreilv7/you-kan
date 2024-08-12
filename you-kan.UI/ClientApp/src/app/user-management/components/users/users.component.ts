@@ -4,7 +4,6 @@ import { MaterialModule } from '../../../shared/material.module';
 import { User } from '../../models/user.model';
 import { UserService } from '../../services/user.service';
 import { UserDetailComponent } from '../user-detail/user-detail.component';
-import { FormBuilder } from '@angular/forms';
 import { trigger, transition, style, animate } from '@angular/animations';
 import { AuthService } from '../../services/auth.service';
 import { Router } from '@angular/router';
@@ -28,7 +27,6 @@ import { Router } from '@angular/router';
   ]
 })
 export class UsersComponent implements OnInit {
-  private fb = inject(FormBuilder);
   userService = inject(UserService);
 
   dataSource: User[] = [];
@@ -47,7 +45,6 @@ export class UsersComponent implements OnInit {
 
   editUser(user: any) {
     this.selectedUser = { ...user }; 
-    // Implement edit logic
   }
 
   saveUpdate(updatedUser: User) {
@@ -67,7 +64,7 @@ export class UsersComponent implements OnInit {
   }
 
   deleteUser(user: any) {
-    if (confirm( "Are you sure you want to delete this user? You will not be able to login with them if you do.")) {
+    if (confirm( "Are you sure you want to delete this user? You will not be able to login with them again if you do.")) {
     this.userService.deleteUser(user.user_id).subscribe(() => {
       this.dataSource = this.dataSource.filter(u => u.user_id !== user.user_id);
       this.dataSource = [...this.dataSource];

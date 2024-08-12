@@ -26,7 +26,7 @@ mat-sidenav-content {
   .toolbar {
     padding: 15px;
     background-image: linear-gradient(to left, rgba(255,0,0,0), rgb(64, 4, 117));
-    ; 
+    margin-bottom: -12px; 
   } 
 
   .toolbar-actions {
@@ -35,6 +35,3 @@ mat-sidenav-content {
     width: 100%;
     gap: 5px;
   }
-
-
-

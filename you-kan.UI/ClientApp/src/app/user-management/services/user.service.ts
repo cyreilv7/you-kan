@@ -30,8 +30,6 @@ export class UserService {
         switchMap(headers => this.http.get<any>(this.apiRoot, { headers, withCredentials: true })))
     }
 
-    //TODO- getUsersForProject(id: number)??
-
     // get user by userID
     getUser(user_id: number): Observable<User> {
       return this.addCsrfToken().pipe(

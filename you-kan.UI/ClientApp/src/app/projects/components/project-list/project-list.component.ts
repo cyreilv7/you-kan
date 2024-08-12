@@ -11,7 +11,8 @@ import { Sprint } from '../../../sprints/models/sprint.model';
 import { MatDialog } from '@angular/material/dialog';
 import { UserService } from '../../../user-management/services/user.service';
 import { SprintService } from '../../../sprints/services/sprint.service';
-import { concatMap, of } from 'rxjs';
+import { concatMap, of, switchMap } from 'rxjs';
+import { User } from '../../../user-management/models/user.model';
 
 @Component({
   selector: 'app-project-list',
@@ -45,6 +46,10 @@ export class ProjectListComponent implements OnInit {
 
 
   ngOnInit(): void {
+    this.setProjectList();
+  }
+
+  setProjectList() {
     this.projectService.getProjectsForUser().subscribe((projects) => {
       this.setProjectAttributes(projects);
       this.dataSource = projects;
@@ -56,26 +61,27 @@ export class ProjectListComponent implements OnInit {
   }
 
   saveProject(updatedProject: Project) {
-    this.projectService.updateProject(updatedProject).subscribe(() => {
-      const index = this.dataSource.findIndex(p => p.project_id === updatedProject.project_id);
-      if (index !== -1) {
-        this.dataSource[index] = updatedProject;
-        this.dataSource = [...this.dataSource];
-      }
+    this.projectService.updateProject(updatedProject).pipe(
+      switchMap(() => this.projectService.getProjectsForUser())
+    ).subscribe((projects) => {
+      this.setProjectAttributes(projects);
+      this.dataSource = projects;
       this.selectedProject = null;
     })
   }
 
   cancelEdit() {
     this.selectedProject = null;
+    this.setProjectList();
   }
 
   deleteProject(project: any) {
+    if (confirm( "Are you sure you want to delete this project?")) {
     this.projectService.deleteProject(project.project_id).subscribe(() => {
       this.dataSource = this.dataSource.filter(p => p.project_id !== project.project_id);
       this.dataSource = [...this.dataSource];
     })
-  }
+  }}
 
   addProject() {
     const dialogRef = this.dialog.open(NewProjectFormComponent, {
@@ -103,13 +109,17 @@ export class ProjectListComponent implements OnInit {
 
   setProjectAttributes(projects: Project[]) {
     projects.forEach(proj => {
-      this.fetchProjectSprints(proj)
+      this.fetchProjectSprints(proj);
+    })
+    projects.forEach(proj => {
+      this.fetchProjectUsers(proj);
     })
   }
 
   fetchProjectUsers(project: Project) {
-    //this needs to be an http request; endpoint doesnt exist yet
-
+    this.projectService.getProjectCollaborators(project.project_id).subscribe((users: User[]) => {
+      project.users = users;
+    })
   }
 
   fetchProjectSprints(project: Project) {
