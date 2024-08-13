@@ -10,7 +10,10 @@ const ensureLoggedIn = ensureLogIn();
 router.use(csrf({cookie: true}));
 router.use(function(req, res, next) {
   const token = req.csrfToken();
-  res.cookie('XSRF-TOKEN', token);
+  res.cookie('XSRF-TOKEN', token, {
+    secure: true,
+    sameSite: 'None'
+  })
   res.locals.csrfToken = token; 
   next();
 });
