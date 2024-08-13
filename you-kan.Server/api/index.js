@@ -61,7 +61,10 @@ app.use(session({
   resave: false,
   saveUninitialized: false,
   store: sessionStore, // Use the Sequelize session store instance
-  sameSite: 'None'
+  cookie: {
+    secure: true,
+    sameSite: 'None'
+  }
 }));
 
 app.use(passport.initialize());
