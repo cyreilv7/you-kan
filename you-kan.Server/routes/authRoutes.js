@@ -14,6 +14,7 @@ router.use(function(req, res, next) {
     secure: true,
     sameSite: 'None'
   })
+  console.log('CSRF Token:', token);
   res.locals.csrfToken = token; 
   next();
 });
