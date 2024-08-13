@@ -63,7 +63,7 @@ app.use(session({
   store: sessionStore, // Use the Sequelize session store instance
   cookie: {
     secure: true,
-    sameSite: 'None'
+    sameSite: 'none'
   }
 }));
 

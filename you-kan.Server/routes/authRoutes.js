@@ -12,7 +12,7 @@ router.use(function(req, res, next) {
   const token = req.csrfToken();
   res.cookie('XSRF-TOKEN', token, {
     secure: true,
-    sameSite: 'None'
+    sameSite: 'none'
   })
   res.locals.csrfToken = token; 
   next();
