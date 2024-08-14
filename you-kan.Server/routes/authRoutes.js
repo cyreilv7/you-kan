@@ -14,11 +14,6 @@ router.use(csrf({cookie: {
 
 router.use(function(req, res, next) {
   const token = req.csrfToken();
-  res.cookie('XSRF-TOKEN', token, {
-    secure: true,
-    sameSite: 'None'
-  })
-  console.log('CSRF Token:', token);
   res.locals.csrfToken = token; 
   next();
 });
