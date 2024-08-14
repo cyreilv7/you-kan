@@ -60,7 +60,8 @@ app.use(session({
   secret: 'abc', // Replace with a strong secret
   resave: false,
   saveUninitialized: false,
-  store: sessionStore
+  store: sessionStore,
+  cookie: {secure: true, sameSite: 'none'}
 }));
 
 app.use(passport.initialize());
