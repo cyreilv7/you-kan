@@ -8,11 +8,10 @@ const router = express.Router();
 const ensureLoggedIn = ensureLogIn();
 
 router.use(csrf({cookie: {
-  httpOnly: true,
   secure: true,
   sameSite: 'None',
-  path: '/'
 }}));
+
 router.use(function(req, res, next) {
   const token = req.csrfToken();
   res.cookie('XSRF-TOKEN', token, {
